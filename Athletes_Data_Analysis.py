@@ -30,10 +30,10 @@ dbutils.fs.mount(
 
 # COMMAND ----------
 
-df1=spark.read.format("csv").option("header","true").load("dbfs:/mnt/bronze/dbo/Athletes/")
-df2=spark.read.format("csv").option("header","true").load("dbfs:/mnt/bronze/dbo/Coaches/")
-df3=spark.read.format("csv").option("header","true").load("dbfs:/mnt/bronze/dbo/Medals/")
-df4=spark.read.format("csv").option("header","true").load("dbfs:/mnt/bronze/dbo/Teams/")
+df1=spark.read.format("csv").option("header","true").load("dbfs:/mnt/bronze/dbo/Athletes/").dropDuplicates()
+df2=spark.read.format("csv").option("header","true").load("dbfs:/mnt/bronze/dbo/Coaches/").dropDuplicates()
+df3=spark.read.format("csv").option("header","true").load("dbfs:/mnt/bronze/dbo/Medals/").dropDuplicates()
+df4=spark.read.format("csv").option("header","true").load("dbfs:/mnt/bronze/dbo/Teams/").dropDuplicates()
 
 
 # COMMAND ----------
@@ -83,6 +83,51 @@ medals_by_team.coalesce(2) \
     .mode("overwrite") \
     .format("delta") \
     .save("dbfs:/mnt/bronze/dbo/Medals/final_data")
+
+# COMMAND ----------
+
+spark.sql("create database IF NOT EXISTS hive_metastore.Athletes_db")
+
+# COMMAND ----------
+
+spark.sql("""use hive_metastore.Athletes_db""")
+
+# COMMAND ----------
+
+
+
+spark.sql("""
+    CREATE EXTERNAL TABLE IF NOT EXISTS Athletes_db.total_athletes_by_country
+    LOCATION 'dbfs:/mnt/bronze/dbo/Athletes/final_data'
+""")
+
+# COMMAND ----------
+
+spark.sql("select * from Athletes_db.total_athletes_by_country").show()
+
+# COMMAND ----------
+
+spark.sql("""
+    CREATE EXTERNAL TABLE IF NOT EXISTS Athletes_db.total_athletes_by_discipline
+    USING DELTA
+    LOCATION 'dbfs:/mnt/bronze/dbo/Coaches/final_data'
+""")
+
+
+# COMMAND ----------
+
+spark.sql("select * from Athletes_db.total_athletes_by_discipline").show()
+
+# COMMAND ----------
+
+spark.sql("""
+    CREATE EXTERNAL TABLE IF NOT EXISTS Athletes_db.medals_by_discipline
+    LOCATION 'dbfs:/mnt/bronze/dbo/Medals/final_data'
+""")
+
+# COMMAND ----------
+
+spark.sql("select * from Athletes_db.medals_by_discipline").show()
 
 # COMMAND ----------
 
