@@ -56,7 +56,7 @@ target_df.show()
 
 #dropDuplicates from source
 source_withoutduplicates=source_df.dropDuplicates(subset=["ID"])
-final_df=source_withoutduplicates.alias("src").join(target_df.alias("trg"),on="ID",how="left")\
+final_df=source_withoutduplicates.alias("src").join(target_df.alias("trg"),on="ID",how="outer")\
     .select("ID",\
 
             coalesce(col("src.Name"),col("trg.Name")).alias("Name"),\
